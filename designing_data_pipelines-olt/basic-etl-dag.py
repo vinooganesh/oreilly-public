@@ -20,8 +20,6 @@ with DAG('basic_etl_dag',
         bash_command='wget -c https://datahub.io/core/top-level-domain-names/r/top-level-domain-names.csv.csv -O /root/airflow-extract-data.csv',
     )
 
-    extract_task
-
     def transform_data():
         """Read in the file, and write a transformed file out"""
         today = date.today()
@@ -36,15 +34,11 @@ with DAG('basic_etl_dag',
          python_callable=transform_data,
          dag=dag)
 
-    transform_task
-
     load_task = MySqlOperator(
         task_id='load_task', sql=r"""
         USE airflow_load_database;
         LOAD DATA LOCAL INFILE '/root/airflow-transformed-data.csv' INTO TABLE top_level_domains FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' IGNORE 1 ROWS;
         """, dag=dag
     )
-
-    load_task
 
     extract_task >> transform_task >> load_task
